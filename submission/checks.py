@@ -24,7 +24,6 @@ PROIBIDOS = (
     "Pereira",
     "Carlos",
     "Mendes",
-    "Feminino",
     "Sacavém",
     "Flores",
     "097865413",
@@ -40,34 +39,37 @@ PROIBIDOS = (
     "2019",
     "2022",
     "12/03",
+    "09/27",
+    "47",
+    "52",
+    "1,68",
+    "72",
+    "145/90",
+    "O+",
+    "62.500",
+    "Premium",
+)
+
+VISIVEIS = (
+    "Feminino",
     "hipertensão",
     "diabetes",
     "HIV",
-    "antirretrovirais",
-    "BRCA1",
-    "cancro",
-    "caucasiana",
+    "hemograma",
+    "glicemia",
+    "ultrassonografia",
     "Divorciada",
     "Católica",
     "Professora",
     "Faculdade",
     "Ex-fumante",
     "álcool",
-    "ansiolíticos",
     "Metformina",
-    "Losartana",
-    "Alprazolam",
     "ansiosa",
-    "cansaço",
-    "fadiga",
-    "stress",
     "trabalho",
-    "hemograma",
-    "glicemia",
-    "lipídico",
-    "hepática",
-    "ultrassonografia",
-    "62.500",
+    "mãe",
+    "pai",
+    "irmão",
 )
 
 EMAIL = re.compile(
@@ -83,6 +85,14 @@ SEXO = re.compile(r"(?im)^Sexo:\s*(.+)$")
 NOME_PACIENTE = re.compile(r"(?m)^Nome:\s*(.+)$")
 ALTURA = re.compile(r"(?im)^Altura:\s*(.+)$")
 PESO = re.compile(r"(?im)^Peso:\s*(.+)$")
+
+
+def contem(texto, palavra):
+    if re.search(r"\w$", palavra):
+        padrao = r"(?i)\b" + re.escape(palavra) + r"\b"
+    else:
+        padrao = r"(?i)(?<!\w)" + re.escape(palavra) + r"(?!\w)"
+    return re.search(padrao, texto) is not None
 
 
 def verificar(texto):
@@ -115,16 +125,17 @@ def verificar(texto):
         )
 
     for palavra in PROIBIDOS:
-        padrao = re.compile(
-            r"(?i)\b" + re.escape(palavra) + r"\b"
-        )
-        if padrao.search(texto):
-            problemas.append("Dado ainda visível: " + palavra)
+        if contem(texto, palavra):
+            problemas.append("Identificador ainda visível: " + palavra)
+
+    for palavra in VISIVEIS:
+        if not contem(texto, palavra):
+            problemas.append("Devia ficar visível: " + palavra)
 
     sexo = SEXO.search(texto)
-    if sexo and sexo.group(1).strip() != "*":
+    if sexo and sexo.group(1).strip() != "Feminino":
         problemas.append(
-            "Sexo deveria ser mascarado: Sexo: " + sexo.group(1).strip()
+            "Sexo devia ficar visível: Sexo: " + sexo.group(1).strip()
         )
 
     nomes = NOME_PACIENTE.findall(texto)
