@@ -9,6 +9,65 @@ LINHAS_OBRIGATORIAS = (
     "Data: 15 de abril de 2025",
     "Referência: ADM-2025-04-15-089",
     "Informações do Paciente:",
+    "Especialidade: Medicina Interna",
+)
+
+PROIBIDOS = (
+    "Maria",
+    "Conceição",
+    "Oliveira",
+    "Santos",
+    "João",
+    "Ana",
+    "António",
+    "Joana",
+    "Pereira",
+    "Carlos",
+    "Mendes",
+    "Feminino",
+    "Sacavém",
+    "Flores",
+    "097865413",
+    "12345678",
+    "11223344556",
+    "4111",
+    "987654321",
+    "ID-BIO",
+    "FACE-ID",
+    "12345-PT",
+    "1978",
+    "2018",
+    "2019",
+    "2022",
+    "12/03",
+    "hipertensão",
+    "diabetes",
+    "HIV",
+    "antirretrovirais",
+    "BRCA1",
+    "cancro",
+    "caucasiana",
+    "Divorciada",
+    "Católica",
+    "Professora",
+    "Faculdade",
+    "Ex-fumante",
+    "álcool",
+    "ansiolíticos",
+    "Metformina",
+    "Losartana",
+    "Alprazolam",
+    "ansiosa",
+    "cansaço",
+    "fadiga",
+    "stress",
+    "trabalho",
+    "hemograma",
+    "glicemia",
+    "lipídico",
+    "hepática",
+    "ultrassonografia",
+    "62.500",
 )
 
 EMAIL = re.compile(
@@ -17,8 +76,13 @@ EMAIL = re.compile(
 TELEFONE = re.compile(
     r"(?:\+351[\s.-]?)?(?:9[1236]\d{7}|2\d{8})\b"
 )
-NIF = re.compile(r"\b[1-9]\d{8}\b")
+NIF = re.compile(r"\b\d{9}\b")
+CARTAO = re.compile(r"\b\d{4}(?:[\s-]?\d{4}){3}\b")
 ASTERISCOS = re.compile(r"\*{2,}")
+SEXO = re.compile(r"(?im)^Sexo:\s*(.+)$")
+NOME_PACIENTE = re.compile(r"(?m)^Nome:\s*(.+)$")
+ALTURA = re.compile(r"(?im)^Altura:\s*(.+)$")
+PESO = re.compile(r"(?im)^Peso:\s*(.+)$")
 
 
 def verificar(texto):
@@ -39,12 +103,47 @@ def verificar(texto):
         problemas.append("Telefone ainda visível: " + telefone)
 
     for nif in NIF.findall(texto):
-        problemas.append("NIF ainda visível: " + nif)
+        problemas.append("Número de 9 dígitos ainda visível: " + nif)
+
+    for cartao in CARTAO.findall(texto):
+        problemas.append("Cartão ainda visível: " + cartao)
 
     for asteriscos in ASTERISCOS.findall(texto):
         problemas.append(
             "Vários asteriscos juntos: " + asteriscos
             + ". Cada palavra mascarada é um só *."
+        )
+
+    for palavra in PROIBIDOS:
+        padrao = re.compile(
+            r"(?i)\b" + re.escape(palavra) + r"\b"
+        )
+        if padrao.search(texto):
+            problemas.append("Dado ainda visível: " + palavra)
+
+    sexo = SEXO.search(texto)
+    if sexo and sexo.group(1).strip() != "*":
+        problemas.append(
+            "Sexo deveria ser mascarado: Sexo: " + sexo.group(1).strip()
+        )
+
+    nomes = NOME_PACIENTE.findall(texto)
+    if nomes and nomes[0].strip() != "* * * *":
+        problemas.append(
+            "Nome do paciente deveria ser '* * * *': Nome: "
+            + nomes[0].strip()
+        )
+
+    altura = ALTURA.search(texto)
+    if altura and altura.group(1).strip() != "*m":
+        problemas.append(
+            "Altura deveria ser '*m': Altura: " + altura.group(1).strip()
+        )
+
+    peso = PESO.search(texto)
+    if peso and peso.group(1).strip() != "*kg":
+        problemas.append(
+            "Peso deveria ser '*kg': Peso: " + peso.group(1).strip()
         )
 
     return problemas
